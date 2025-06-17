@@ -1,37 +1,31 @@
 const mongoose = require('mongoose');
 const app = require('./app');
 
-// Get MongoDB connection string directly from environment
-const DB = process.env.MONGO_URL;
+// 1. Debugging - will show in Railway logs
+console.log("Railway Environment Variables:", Object.keys(process.env));
+console.log("MONGO_URL present:", !!process.env.MONGO_URL);
 
-// CRITICAL DEBUGGING - DO NOT REMOVE
-console.log('Environment Variables:', Object.keys(process.env));
-console.log('MONGO_URL present:', !!DB);
-console.log('Connection String:', DB ? `${DB.substring(0, 25)}...` : 'UNDEFINED');
-
-if (!DB) {
-  console.error('FATAL ERROR: MONGO_URL is undefined');
-  console.error('Possible causes:');
-  console.error('1. MongoDB service not attached to application');
-  console.error('2. Variable name mismatch (should be MONGO_URL)');
-  console.error('3. Deployment not restarted after variable change');
+// 2. Mandatory check - exit if missing
+if (!process.env.MONGO_URL) {
+  console.error("❌❌❌ EMERGENCY: MONGO_URL IS UNDEFINED ❌❌❌");
+  console.error("Check Railway Variables -> Service Variables -> MONGO_URL exists");
   process.exit(1);
 }
 
-// Connect with modern settings and timeout
-mongoose.connect(DB, {
+// 3. Connect with timeout
+mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000  // Fail after 5 seconds
+  serverSelectionTimeoutMS: 5000 // 5 second timeout
 })
-.then(() => console.log('✅ MongoDB connected successfully'))
+.then(() => console.log("✅✅✅ MongoDB Connected Successfully"))
 .catch(err => {
-  console.error('❌ MongoDB connection failed:', err.message);
-  console.error('Full error:', err);
+  console.error("❌❌❌ MongoDB Connection Failed:", err.message);
   process.exit(1);
 });
 
-const port = process.env.PORT || 8000;
+// 4. Use Railway's PORT (never hardcode)
+const port = process.env.PORT || 3000; // Must be number (no 0809)
 app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+  console.log(`🚀🚀🚀 Server running on PORT ${port} (Not 0809)`);
 });
