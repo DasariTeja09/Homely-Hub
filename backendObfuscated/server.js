@@ -1,27 +1,37 @@
 const mongoose = require('mongoose');
 const app = require('./app');
-const dotenv = require('dotenv');
 
-// Load environment variables (for local development)
-dotenv.config({ path: './config.env' });
+// Get MongoDB connection string directly from environment
+const DB = process.env.MONGO_URL;
 
-// Use Railway's MONGO_URL or fallback to local DATABASE_LOCAL
-const DB = process.env.MONGO_URL || process.env.DATABASE_LOCAL;
+// CRITICAL DEBUGGING - DO NOT REMOVE
+console.log('Environment Variables:', Object.keys(process.env));
+console.log('MONGO_URL present:', !!DB);
+console.log('Connection String:', DB ? `${DB.substring(0, 25)}...` : 'UNDEFINED');
 
-console.log('Using DB:', DB);
+if (!DB) {
+  console.error('FATAL ERROR: MONGO_URL is undefined');
+  console.error('Possible causes:');
+  console.error('1. MongoDB service not attached to application');
+  console.error('2. Variable name mismatch (should be MONGO_URL)');
+  console.error('3. Deployment not restarted after variable change');
+  process.exit(1);
+}
 
-// Connect to MongoDB with proper options
+// Connect with modern settings and timeout
 mongoose.connect(DB, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000  // Fail after 5 seconds
 })
-.then(() => console.log('DB connection successful'))
+.then(() => console.log('✅ MongoDB connected successfully'))
 .catch(err => {
-  console.error('DB connection error:', err);
-  process.exit(1); // Exit process on connection failure
+  console.error('❌ MongoDB connection failed:', err.message);
+  console.error('Full error:', err);
+  process.exit(1);
 });
 
-const port = process.env.PORT || 8000; // Use Railway's PORT if available
+const port = process.env.PORT || 8000;
 app.listen(port, () => {
-  console.log(`App running on port: ${port}`);
+  console.log(`🚀 Server running on port ${port}`);
 });
